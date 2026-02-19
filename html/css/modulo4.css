@@ -1,0 +1,83 @@
+@CHARSET "UTF-8";
+
+
+#painel_esquerdo {
+	border: 0px solid #999;
+	float:left;
+	width: 410px;
+	height: 400px;
+	margin-right: 10px;
+
+}
+
+#container_programa {
+    width: 400px;
+    height: 98%;
+}
+
+#painel_direito {
+	border: 0px solid #999;
+	float:left;
+	width: 410px;
+	height: 400px;
+
+}
+
+#container_botoes {
+	border: 0px solid #999;
+	float:left;
+	width: 400px;
+	height: 400px;
+}
+
+
+.btn_comando {
+	text-align: center;
+	cursor: pointer;
+	float: left;
+	background-color: #86FF71;
+	width: 10px;
+	font-size: 17pt;
+}
+
+.btn_input_text {
+		font-size: 12pt;
+		float: left;
+}
+
+.btn_vazio {
+	float: left;
+}
+
+.btn_frente {
+    background-size: 55px 55px;
+    background-position: center; 
+    background-repeat: no-repeat;
+	background-image: url("../imagens/seta_frente.png");
+}
+
+.btn_tras { 
+    background-size: 55px 55px;
+    background-position: center; 
+    background-repeat: no-repeat;
+	background-image: url("../imagens/seta_tras.png");
+}
+
+.btn_esquerda {
+    background-size: 55px 55px;
+    background-position: center; 
+    background-repeat: no-repeat;
+	background-image: url("../imagens/seta_esquerda.png");
+}
+
+.btn_direita {
+    background-size: 55px 55px;
+    background-position: center; 
+    background-repeat: no-repeat;
+	background-image: url("../imagens/seta_direita.png");
+}
+
+
+.pula_linha {
+	clear: both;
+}
