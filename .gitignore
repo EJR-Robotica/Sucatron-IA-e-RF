@@ -1,0 +1,17 @@
+# phpMyAdmin (nao e codigo do projeto)
+html/phpmyadmin/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Ambiente Python
+__pycache__/
+*.pyc
+.env
+
+# ZIPs grandes
+*.zip
