@@ -1,0 +1,14 @@
+[Unit]
+Description=Sucatron RF Motores
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/rf_motores.py
+WorkingDirectory=/home/pi
+StandardOutput=journal
+StandardError=journal
+Restart=on-failure
+User=pi
+
+[Install]
+WantedBy=multi-user.target
