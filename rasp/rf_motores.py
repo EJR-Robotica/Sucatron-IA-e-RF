@@ -40,9 +40,6 @@ ENB = 19   # Motor B - PWM
 # ── Velocidade (0 a 100) ─────────────────────────────────────────────
 VELOCIDADE = 80
 
-# ── Debounce (segundos) ───────────────────────────────────────────────
-DEBOUNCE = 0.05  # 50ms — ignora transições mais rápidas que isso
-
 # ── Setup GPIO ───────────────────────────────────────────────────────
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -123,28 +120,6 @@ def girar_direita():
 
 # ── Loop principal ───────────────────────────────────────────────────
 
-# Estado estável anterior de cada canal
-estado_anterior = {RF_FRENTE: 0, RF_TRAS: 0, RF_ESQUERDA: 0, RF_DIREITA: 0}
-# Momento da última leitura diferente
-tempo_mudanca  = {RF_FRENTE: 0, RF_TRAS: 0, RF_ESQUERDA: 0, RF_DIREITA: 0}
-# Leitura pendente (ainda não confirmada)
-leitura_raw    = {RF_FRENTE: 0, RF_TRAS: 0, RF_ESQUERDA: 0, RF_DIREITA: 0}
-
-def ler_debounce():
-    """Retorna o estado estável dos 4 canais após debounce."""
-    agora = time.time()
-    for pino in [RF_FRENTE, RF_TRAS, RF_ESQUERDA, RF_DIREITA]:
-        raw = GPIO.input(pino)
-        if raw != leitura_raw[pino]:
-            leitura_raw[pino] = raw
-            tempo_mudanca[pino] = agora
-        if (agora - tempo_mudanca[pino]) >= DEBOUNCE:
-            estado_anterior[pino] = leitura_raw[pino]
-    return (estado_anterior[RF_FRENTE],
-            estado_anterior[RF_TRAS],
-            estado_anterior[RF_ESQUERDA],
-            estado_anterior[RF_DIREITA])
-
 print("Sucatron RF - Aguardando comandos... (Ctrl+C para sair)")
 print(f"Velocidade: {VELOCIDADE}%")
 
@@ -152,7 +127,10 @@ ultimo_cmd = ""
 
 try:
     while True:
-        f, t, e, d = ler_debounce()
+        f = GPIO.input(RF_FRENTE)
+        t = GPIO.input(RF_TRAS)
+        e = GPIO.input(RF_ESQUERDA)
+        d = GPIO.input(RF_DIREITA)
 
         if f:
             if ultimo_cmd != "FRENTE":
