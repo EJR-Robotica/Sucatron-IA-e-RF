@@ -38,7 +38,11 @@ IN4 = 24
 ENB = 19   # Motor B - PWM
 
 # ── Velocidade (0 a 100) ─────────────────────────────────────────────
-VELOCIDADE = 80
+VELOCIDADE    = 80
+KICK_VEL      = 100   # duty cycle durante o kick (%)
+KICK_TEMPO    = 0.15  # duração do kick em segundos
+RAMP_STEP     = 10    # incremento de PWM por passo no ramp
+RAMP_DELAY    = 0.01  # tempo entre passos do ramp (segundos)
 
 # ── Setup GPIO ───────────────────────────────────────────────────────
 GPIO.setmode(GPIO.BCM)
@@ -67,35 +71,67 @@ pwm_b.start(0)
 
 # ── Funções dos motores ──────────────────────────────────────────────
 
-def motor_esquerdo(direcao, vel=VELOCIDADE):
+def ramp_up(pwm, vel_alvo):
+    """Sobe PWM gradualmente de 0 até vel_alvo para reduzir back-EMF."""
+    for v in range(0, vel_alvo + 1, RAMP_STEP):
+        pwm.ChangeDutyCycle(v)
+        time.sleep(RAMP_DELAY)
+    pwm.ChangeDutyCycle(vel_alvo)
+
+def ramp_down(pwm, vel_atual):
+    """Desce PWM gradualmente até 0 para reduzir pico de back-EMF."""
+    for v in range(vel_atual, -1, -RAMP_STEP):
+        pwm.ChangeDutyCycle(v)
+        time.sleep(RAMP_DELAY)
+    pwm.ChangeDutyCycle(0)
+
+def kick(pwm, vel_alvo):
+    """Pulso de 100% por KICK_TEMPO para vencer a inércia, depois ramp até vel_alvo."""
+    pwm.ChangeDutyCycle(KICK_VEL)
+    time.sleep(KICK_TEMPO)
+    pwm.ChangeDutyCycle(vel_alvo)
+
+def motor_esquerdo(direcao, vel=VELOCIDADE, kickstart=False):
     """direcao: 'frente', 'tras', 'parar'"""
     if direcao == 'frente':
         GPIO.output(IN1, GPIO.HIGH)
         GPIO.output(IN2, GPIO.LOW)
-        pwm_a.ChangeDutyCycle(vel)
+        if kickstart:
+            kick(pwm_a, vel)
+        else:
+            ramp_up(pwm_a, vel)
     elif direcao == 'tras':
         GPIO.output(IN1, GPIO.LOW)
         GPIO.output(IN2, GPIO.HIGH)
-        pwm_a.ChangeDutyCycle(vel)
+        if kickstart:
+            kick(pwm_a, vel)
+        else:
+            ramp_up(pwm_a, vel)
     else:
+        ramp_down(pwm_a, VELOCIDADE)
         GPIO.output(IN1, GPIO.LOW)
         GPIO.output(IN2, GPIO.LOW)
-        pwm_a.ChangeDutyCycle(0)
 
-def motor_direito(direcao, vel=VELOCIDADE):
+def motor_direito(direcao, vel=VELOCIDADE, kickstart=False):
     """direcao: 'frente', 'tras', 'parar'"""
     if direcao == 'frente':
         GPIO.output(IN3, GPIO.HIGH)
         GPIO.output(IN4, GPIO.LOW)
-        pwm_b.ChangeDutyCycle(vel)
+        if kickstart:
+            kick(pwm_b, vel)
+        else:
+            ramp_up(pwm_b, vel)
     elif direcao == 'tras':
         GPIO.output(IN3, GPIO.LOW)
         GPIO.output(IN4, GPIO.HIGH)
-        pwm_b.ChangeDutyCycle(vel)
+        if kickstart:
+            kick(pwm_b, vel)
+        else:
+            ramp_up(pwm_b, vel)
     else:
+        ramp_down(pwm_b, VELOCIDADE)
         GPIO.output(IN3, GPIO.LOW)
         GPIO.output(IN4, GPIO.LOW)
-        pwm_b.ChangeDutyCycle(0)
 
 def parar():
     motor_esquerdo('parar')
@@ -133,25 +169,33 @@ try:
         d = GPIO.input(RF_DIREITA)
 
         if f:
-            if ultimo_cmd != "FRENTE":
+            novo = ultimo_cmd != "FRENTE"
+            if novo:
                 print("FRENTE")
                 ultimo_cmd = "FRENTE"
-            frente()
+            motor_esquerdo('frente', kickstart=novo)
+            motor_direito('frente',  kickstart=novo)
         elif t:
-            if ultimo_cmd != "TRAS":
+            novo = ultimo_cmd != "TRAS"
+            if novo:
                 print("TRAS")
                 ultimo_cmd = "TRAS"
-            tras()
+            motor_esquerdo('tras', kickstart=novo)
+            motor_direito('tras',  kickstart=novo)
         elif e:
-            if ultimo_cmd != "ESQUERDA":
+            novo = ultimo_cmd != "ESQUERDA"
+            if novo:
                 print("ESQUERDA")
                 ultimo_cmd = "ESQUERDA"
-            girar_esquerda()
+            motor_esquerdo('tras',   kickstart=novo)
+            motor_direito('frente',  kickstart=novo)
         elif d:
-            if ultimo_cmd != "DIREITA":
+            novo = ultimo_cmd != "DIREITA"
+            if novo:
                 print("DIREITA")
                 ultimo_cmd = "DIREITA"
-            girar_direita()
+            motor_esquerdo('frente', kickstart=novo)
+            motor_direito('tras',    kickstart=novo)
         else:
             if ultimo_cmd != "":
                 print("PARADO")
